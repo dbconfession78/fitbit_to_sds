@@ -38,7 +38,8 @@ class AQI_API:
         for data in self.aqi_list:
             start_time = datetime.strptime(date, "%Y-%m-%d")
             for num in data:
-                our_list[start_time] = num
+                converted_date = start_time.strftime("%Y-%m-%d_%X")
+                our_list[converted_date] = num
                 start_time += timedelta(hours=1)
         self.final_list = our_list
     
@@ -46,11 +47,21 @@ class AQI_API:
         self.get_data(date)
         self.shape_data(date)
         return self.final_list
-
-# Example code for how it works!
-# x = AQI_API()
-# x.get_data("2019-01-01")
-# x.shape_data("2019-01-01")
-
+    
+    def shift_date(self, date):
+        new_date = datetime.strptime(date, "%Y-%m-%d")
+        new_date += timedelta(days=1)
+        converted_date = new_date.strftime("%Y-%m-%d")
+        return converted_date
+    
+    def compile_lots_of_data(self, num):
+        start_date = "2019-01-01"
+        compiled_list = []
+        for count in range(num):
+            self.get_data(start_date)
+            self.shape_data(start_date)
+            start_date = self.shift_date(start_date)
+            compiled_list.append(self.final_list)
+        return compiled_list
 
         
