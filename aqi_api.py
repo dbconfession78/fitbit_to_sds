@@ -7,6 +7,8 @@ class AQI_API:
     aqi_url = ''
     aqi_list = []
     final_list = {}
+    compiled_list = []
+    sds_list = []
     
     # Actually obtain the token (open the JSON file)
     with open('config.json') as config_file:
@@ -38,7 +40,7 @@ class AQI_API:
         for data in self.aqi_list:
             start_time = datetime.strptime(date, "%Y-%m-%d")
             for num in data:
-                converted_date = start_time.strftime("%Y-%m-%d_%X")
+                converted_date = start_time.strftime("%Y/%m/%d %X")
                 our_list[converted_date] = num
                 start_time += timedelta(hours=1)
         self.final_list = our_list
@@ -62,6 +64,20 @@ class AQI_API:
             self.shape_data(start_date)
             start_date = self.shift_date(start_date)
             compiled_list.append(self.final_list)
+        self.compiled_list = compiled_list
         return compiled_list
+    
+    def shape_to_sds_type(self):
+        for x in self.compiled_list:
+            for key in x:
+                sds_thing = {"time": key, "aqi": x[key]}
+                self.sds_list.append(sds_thing)
+        print(self.sds_list)
+
+x = AQI_API()
+x.compile_lots_of_data(20)
+x.shape_to_sds_type()
+
+
 
         
