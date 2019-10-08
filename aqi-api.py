@@ -41,8 +41,11 @@ class AQI_API:
                 our_list[start_time] = num
                 start_time += timedelta(hours=1)
         self.final_list = our_list
-
-
+    
+    def return_final_data(self, date):
+        self.get_data(date)
+        self.shape_data(date)
+        return self.final_list
 
 # Example code for how it works!
 # x = AQI_API()
