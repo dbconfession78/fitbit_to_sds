@@ -37,6 +37,21 @@ class SdsClient(object):
         if sds_type is None or not isinstance(sds_type, SdsType):
             raise TypeError
 
+        # Try to get SDS type first
+        req_url = self.url + self.__typesPath.format(
+            tenant_id=self.tenantId,
+            namespace_id=namespace_id,
+            type_id=sds_type.Id)
+
+        response = requests.get(
+            url=req_url,
+            headers=self.__sds_headers())
+
+        if 199 < response.status_code < 300:
+            sds_type = SdsType.from_json(json.loads(response.content))
+            response.close()
+            return sds_type
+
         req_url = self.url + self.__typesPath.format(
             tenant_id=self.tenantId,
             namespace_id=namespace_id,
@@ -209,16 +224,9 @@ class SdsClient(object):
         if value is None:
             raise TypeError
 
-        # if callable(getattr(value, "to_json", None)):
-        #     payload = value.to_json()
-        # else:
-        #     payload = value
-
-        # payload_temp = "[{'Time': '2017-11-23T19:00:00Z','SleepHours': 1110101}]"
-
         time = value.time
-        sleepHours = str(value.__getattribute__("SleepHours"))
-        payload = "[{'Time': '" + time + "','SleepHours': " + sleepHours + "}]"
+        sleepHours = str(value.__getattribute__("sleep"))
+        payload = "[{'time': '" + time + "','sleep': " + sleepHours + "}]"
         # payload = [{"Time": "2017-11-23T19:00:00Z", "SleepHours": "10292"}]
         req_url = self.url + self.__updateValuePath.format(
             tenant_id=self.tenantId,
