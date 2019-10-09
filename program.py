@@ -22,37 +22,19 @@ class Program:
         print()
         self.config = config
         self.sds = SequentialDataStore(self.config)
+        self.fitbit = FitBit(self.config)
 
-        def run(self):
-            """Executes the program"""
-            # Get FitBit data
-            # https://api.fitbit.com/1/user/223VS85/sleep/date/2019-10-07.json
+    def run(self):
+        """Executes the program"""
+        # Get FitBit data
+        sleep_info = self.fitbit.get_sleep_data(self.config.get("Preferences", "StartDate"))["sleep"][0]
 
-            print("todo")
+        # Get air quality data
+        print("todo: GET AIR QUALITY DATA")
 
-            # Get air quality data
-            print("todo")
-
-            # Convert data for ocs
-            print("todo")
-
-            # Write to ocs
-            print("todo")
-
-    def test2(self):
-        return
-
-    def WriteToSds(self, data):
-        # fbType = self.sds.init_type("FitBitType", ["Time", "SleepHours"])
-        self.sds.to_sds(data,)
-        self.sds.client.get_or_create_type(self.sds.namespace_id)
-
-    def test(self):
-        fb = FitBit(self.config)
-        data = fb.get_sleep_data("2019-10-07")
-        self.WriteToSds(data)
-        # sdsType = self.sds.init_type
-        print("")
+        # Convert & Write to ocs
+        # TODO: loop for all datapoints
+        self.sds.to_sds("FitBit", sleep_info["startTime"], sleep_info["duration"])
 
 
 def main():
@@ -60,9 +42,8 @@ def main():
     config = ConfigParser()
     config.read("./config.ini")
     app = Program(config)
-    # app.run()
-    app.test()
-    # app.test2()
+    app.run()
+    print("Ok!")
 
 
 if __name__ == "__main__":

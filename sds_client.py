@@ -1,4 +1,3 @@
-import adal
 from helper_functions import *
 import json
 import requests
@@ -210,19 +209,26 @@ class SdsClient(object):
         if value is None:
             raise TypeError
 
-        if callable(getattr(value, "to_json", None)):
-            payload = value.to_json()
-        else:
-            payload = value
+        # if callable(getattr(value, "to_json", None)):
+        #     payload = value.to_json()
+        # else:
+        #     payload = value
 
+        # payload_temp = "[{'Time': '2017-11-23T19:00:00Z','SleepHours': 1110101}]"
+
+        time = value.time
+        sleepHours = str(value.__getattribute__("SleepHours"))
+        payload = "[{'Time': '" + time + "','SleepHours': " + sleepHours + "}]"
+        # payload = [{"Time": "2017-11-23T19:00:00Z", "SleepHours": "10292"}]
         req_url = self.url + self.__updateValuePath.format(
             tenant_id=self.tenantId,
             namespace_id=namespace_id,
             stream_id=stream_id)
 
+        h = self.__sds_headers()
         response = requests.put(url=req_url,
                                 data=payload,
-                                headers=self.__sds_headers())
+                                headers=h)
         if response.status_code < 200 or response.status_code >= 300:
             response.close()
             raise SdsError(
@@ -254,7 +260,7 @@ class SdsClient(object):
 
     def __sds_headers(self):
         return {"Authorization": "bearer %s" % self.__get_token(),
-                "Content-type": "application/json",
+                "Content-Type": "application/json",
                 "Accept": "*/*; q=1"}
 
     def __set_path_and_query_templates(self):
@@ -272,4 +278,4 @@ class SdsClient(object):
                                                    "startIndex={start}&" \
                                                    "endIndex={end}&" \
                                                    "viewid={view_id}"
-        self.__updateValuePath = self.__dataPath + "/UpdateValue"
+        self.__updateValuePath = self.__dataPath + "?"
