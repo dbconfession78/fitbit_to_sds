@@ -73,10 +73,18 @@ class AQI_API:
                 sds_thing = {"time": key, "aqi": x[key]}
                 self.sds_list.append(sds_thing)
         print(self.sds_list)
+    
+    def sort_data(self):
+        self.sds_list.sort(key=lambda x: datetime.strptime(x['time'], '%Y/%m/%d %X'))
+        print(self.sds_list)
+
 
 x = AQI_API()
-x.compile_lots_of_data(20)
+x.compile_lots_of_data(280)
 x.shape_to_sds_type()
+x.sort_data()
+with open('data.txt', 'w') as outfile:
+    json.dump(x.sds_list, outfile)
 
 
 
