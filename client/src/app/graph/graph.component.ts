@@ -3,32 +3,6 @@ import { HttpClient } from '@angular/common/http';
 
 declare var Plotly: any;
 
-const sleepLayout = {
-  title: 'Amount of Sleep',
-  xaxis: {
-    title: 'Timestamp',
-    showgrid: false,
-    zeroline: false
-  },
-  yaxis: {
-    title: 'Number of Hours',
-    showline: false
-  }
-};
-
-const AQILayout = {
-  title: 'Air Quality Index',
-  xaxis: {
-    title: 'Timestamp',
-    showgrid: false,
-    zeroline: false
-  },
-  yaxis: {
-    title: 'Index Value',
-    showline: false
-  }
-};
-
 const baseURL = 'https://staging.osipi.com/api/v1/Tenants/1f11c599-be17-4812-a72f-00921b7716df/Namespaces/EmergingTech/';
 const startIndex = '2019-01-01T00:00:00Z';
 
@@ -53,7 +27,7 @@ export class GraphComponent implements OnInit, OnChanges {
   constructor(private httpClient: HttpClient) { }
 
   ngOnChanges(changes) {
-    console.log(changes, this);
+    // console.log(changes, this);
   }
 
   ngOnInit() {
@@ -99,56 +73,77 @@ export class GraphComponent implements OnInit, OnChanges {
 
   callOCS_AQI(headerDict) {
     this.httpClient.get(baseURL + 'Streams/aqistream/Data?startIndex=' + startIndex + '&count=10000',
-      {headers: {...headerDict}}).subscribe(data => {
-        this.shapeAQIData(data);
+      {headers: {...headerDict}}).subscribe(aqiData => {
+        this.httpClient.get(baseURL + 'Streams/sleepstream/Data?startIndex=' + startIndex + '&count=10000',
+        {headers: {...headerDict}}).subscribe(sleepData => {
+          this.shapeAQIData(aqiData, sleepData);
+        });
     });
   }
 
-  shapeAQIData(data) {
+  shapeAQIData(aqiData, sleepData) {
     // Shape data from OCS into x[] and y[].
-    const x = [];
-    const y = [];
-    data.forEach(currentPoint => {
+    const xAQI = [];
+    const yAQI = [];
+    const xSleep = [];
+    const ySleep = [];
+
+    // Loop to obtain all data
+    aqiData.forEach(currentPoint => {
       if (currentPoint.aqi && currentPoint.aqi > -1) {
-        x.push(new Date(currentPoint.time));
-        y.push(currentPoint.aqi);
+        xAQI.push(new Date(currentPoint.time));
+        yAQI.push(currentPoint.aqi);
+      }
+    });
+
+    sleepData.forEach(currentPoint => {
+      const pointYear = new Date(currentPoint.time).getUTCFullYear();
+      if (currentPoint.sleep && pointYear === 2019) {
+        xSleep.push(new Date(currentPoint.time));
+        ySleep.push(currentPoint.sleep / 60);
       }
     });
 
     // Re-create AQI Data!
-    this.aqiData = [{
-      x,
-      y,
-      name: 'name of graph',
-      type: 'scatter'
-    }];
-
-    // Shape the update array (with new data).
-    const update = {
-      x: [[...x]],
-      y: [[...y]]
+    const trace1 = {
+      x: xAQI,
+      y: yAQI,
+      type: 'scatter',
+      name: 'AQI Data'
     };
+    const trace2 = {
+      x: xSleep,
+      y: ySleep,
+      type: 'scatter',
+      name: 'Sleep Data',
+      yaxis: 'y2'
+    };
+    const dataz = [trace1, trace2];
+
+    const layout = {
+      title: 'Correlating AQI and Sleep',
+      yaxis: {
+        title: 'AQI Data'
+      },
+      yaxis2: {
+        title: 'Sleep Data',
+        overlaying: 'y',
+        side: 'right'
+      }
+    }
 
     // Obtain AQI Graph and update!
-    const curAQI = document.getElementById('AQIGraph');
-    Plotly.restyle(curAQI, update);
+    console.log('Performing update!');
+    Plotly.newPlot(this.AQIGraph.nativeElement, dataz, layout);
   }
 
   initialPlot() {
-
-    // Graph the initial Sleep Graph!
-    this.SleepGraph = Plotly.newPlot(
-      this.SleepGraph.nativeElement,
-      this.sleepData,
-      sleepLayout
-    );
-
     // Graph the initial AQI Info!
-    this.AQIGraph = Plotly.newPlot(
+    /*this.AQIGraph = Plotly.newPlot(
       this.AQIGraph.nativeElement,
       this.aqiData,
       AQILayout
-    );
+    );*/
   }
 
 }
