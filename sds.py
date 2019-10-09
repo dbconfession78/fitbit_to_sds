@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 from helper_functions import raise_error
 from sds_client import SdsClient
@@ -5,7 +6,6 @@ from sds_type import SdsType
 from sds_type_property import SdsTypeProperty
 from sds_stream import SdsStream
 from sds_type_data import SdsTypeData
-from guid import GUID
 """
 sds: contains SequentialDataStore class definition
 """
@@ -78,9 +78,9 @@ class SequentialDataStore:
         self.types[type_id] = sds_type
         return True
 
-    def init_stream(self, type_id):
+    def init_stream(self, type_id, stream_id):
         """Initializes an SdsStream object"""
-        sds_stream = SdsStream(stream_id=type_id, name=type_id,
+        sds_stream = SdsStream(stream_id=stream_id, name=stream_id,
                                description="A stream to store {} "
                                            "events".format(type_id),
                                type_id=type_id)
@@ -92,42 +92,34 @@ class SequentialDataStore:
         return sds_stream
 
     # def to_sds(self, device, feed, time_key):
-    def to_sds(self, data):
+    def to_sds(self, id_prefix, time_key, value):
         """Wrapper for SdsClient's 'update_value' method"""
         # type_id = device.name.lower()
-        type_id = "temp-id"
+        type_id = id_prefix + "-Type-" + str(uuid.uuid1())
+        stream_id = id_prefix + "-Stream-" + str(uuid.uuid1())
         sds_type = self.types.get(type_id)
         should_setup = False
         if not sds_type:
             type_id = type_id.lower().replace(' ', '_')
-            print("Setting up SDS Type and Stream for '{}'".format(type_id))
-            print("---------------------------" +
-                  ("-" * len(type_id) + "--"))
-            print("Creating an SDS Type for '{}'".format(
+            print("Creating SDS Type, '{}'".format(
                 type_id))
 
         metric_names = ["SleepHours"]
         if self.init_type(type_id, metric_names):
-            sds_stream = self.streams.get(type_id)
+            sds_stream = self.streams.get(stream_id)
             if not sds_stream:
-                print("Creating an SDS Stream for '{}'".format(type_id))
-                print("---------------------------" + ("-" * len(type_id) + "--"))
+                print("Creating SDS Stream, '{}'".format(stream_id))
+                print("---------------------------" + ("-" * len(stream_id) + "--"))
                 should_setup = True
 
-            stream = self.init_stream(type_id)
+            stream = self.init_stream(type_id, stream_id)
             if should_setup:
                     print("SDS Setup complete\n")
-            metric_dict = feed.construct_metric_dict(-1)
 
-            if (device.last_metrics_written and metric_dict == device.last_metrics_written):
-                print("No new  data for '{}'".format(device.name))
-                self.ws.has_new_data = False
-                return
-            self.ws.has_new_data = True
-            device.last_metrics_written = metric_dict
-            print("-------------------------------" + ("-" * len(device.name)))
-            print("Writing new data from '{}' to SDS".format(device.name))
-            print("-------------------------------" + ("-" * len(device.name)))
+            print("-------------------------------" + ("-" * len(stream_id)))
+            print("Writing new data to SDS Stream, '{}".format(stream_id))
+            print("-------------------------------" + ("-" * len(stream_id)))
+            metric_dict = {"SleepHours": value}
             event = self.next_event(type_id, metric_dict, time_key=time_key)
             if not event:
                 self.raise_error("to_sds() ERROR: Failed to create event")
