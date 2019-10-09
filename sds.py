@@ -95,8 +95,10 @@ class SequentialDataStore:
     def to_sds(self, id_prefix, time_key, value):
         """Wrapper for SdsClient's 'update_value' method"""
         # type_id = device.name.lower()
-        type_id = id_prefix + "-Type-" + str(uuid.uuid1())
-        stream_id = id_prefix + "-Stream-" + str(uuid.uuid1())
+        type_id = id_prefix + "type"
+        # type_id = id_prefix + "-Type-" + str(uuid.uuid1())
+        stream_id = id_prefix + "stream"
+        # stream_id = id_prefix + "-Stream-" + str(uuid.uuid1())
         sds_type = self.types.get(type_id)
         should_setup = False
         if not sds_type:
@@ -104,7 +106,7 @@ class SequentialDataStore:
             print("Creating SDS Type, '{}'".format(
                 type_id))
 
-        metric_names = ["SleepHours"]
+        metric_names = ["sleep"]
         if self.init_type(type_id, metric_names):
             sds_stream = self.streams.get(stream_id)
             if not sds_stream:
@@ -119,12 +121,18 @@ class SequentialDataStore:
             print("-------------------------------" + ("-" * len(stream_id)))
             print("Writing new data to SDS Stream, '{}".format(stream_id))
             print("-------------------------------" + ("-" * len(stream_id)))
-            metric_dict = {"SleepHours": value}
+            metric_dict = {"sleep": value}
             event = self.next_event(type_id, metric_dict, time_key=time_key)
             if not event:
                 self.raise_error("to_sds() ERROR: Failed to create event")
             for k, v in event.__dict__.items():
-                print("{}: {}".format(k, v))
+
+                if k != "prop_names":
+                    if k == "sleep":
+                        print("{}: {} hours, {} minutes".format(k, v//60, v % 60))
+                    else:
+                        print("{}: {}".format(k, v))
+
             print()
             self.write_single_event_to_sds(event, stream.Id)
 
