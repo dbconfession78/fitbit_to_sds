@@ -22,10 +22,8 @@ class FitBit:
             req_uri,
             headers=self.__headers())
 
-        content = response.content
-        json = response.json()
-        return json
+        return response.json()
 
     def get_token(self):
-        # TODO: make this programmatic
-        self.token = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIyMkI2MjIiLCJzdWIiOiIyM1ZTODUiLCJpc3MiOiJGaXRiaXQiLCJ0eXAiOiJhY2Nlc3NfdG9rZW4iLCJzY29wZXMiOiJ3aHIgd251dCB3cHJvIHdzbGUgd3dlaSB3c29jIHdzZXQgd2FjdCB3bG9jIiwiZXhwIjoxNTcxMDk2NzMwLCJpYXQiOjE1NzA0OTE5ODl9.di8nP0Ib1RkBxANVwLivzM1CPD9uu2FRomim7B4c49g"
+        # TODO: make token refresh programmatic
+        self.token = self.config.get("Access", "FitBitToken")

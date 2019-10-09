@@ -1,11 +1,10 @@
-import uuid
-from datetime import datetime
 from helper_functions import raise_error
 from sds_client import SdsClient
-from sds_type import SdsType
-from sds_type_property import SdsTypeProperty
 from sds_stream import SdsStream
+from sds_type import SdsType
 from sds_type_data import SdsTypeData
+from sds_type_property import SdsTypeProperty
+
 """
 sds: contains SequentialDataStore class definition
 """
@@ -21,15 +20,12 @@ class SequentialDataStore:
         self.streams = {}
         self.types = {}
         self.client = self.init_client()
-        # self.ws = weather_station
 
     def init_client(self):
         """Initializes SDS Client"""
         client = SdsClient(self.config.get('Access', 'TenantId'),
                            self.config.get('Access', 'Address'),
-                           self.config.get('Credentials', 'Resource'),
-                           self.config.get('Credentials', 'Authority'),
-                           self.config.get('Credentials', 'Clientid'),
+                           self.config.get('Credentials', 'ClientId'),
                            self.config.get('Credentials', 'ClientSecret'))
 
         if not client:
@@ -76,6 +72,7 @@ class SequentialDataStore:
         if not sds_type:
             self.raise_error("init_type() ERROR: Failed to create type")
         self.types[type_id] = sds_type
+
         return True
 
     def init_stream(self, type_id, stream_id):
@@ -142,33 +139,34 @@ class SequentialDataStore:
                     [t.Id for t in self.types],
                     message)
 
-    def from_sds(self, start):
-        """Reads all device events for all locations written to SDS during
-        current session"""
-        events_read_from_sds = []
-        if not self.types and not self.streams:
-            return events_read_from_sds
-        for loc in self.ws.locations:
-            for device in loc.devices:
-                type_id = device.name
-                if self.init_type(type_id=type_id,
-                                  prop_names=device.metric_names):
-                    self.init_stream(type_id)
-
-                    value_class = SdsTypeData(type_id=device.name,
-                                              prop_names=device.metric_names)
-
-                    session_events_written = self.client.get_window_values(
-                        self.namespace_id,
-                        type_id,
-                        value_class,
-                        start=start,
-                        end=datetime.utcnow()
-                    )
-
-                    if session_events_written:
-                        events_read_from_sds.append(session_events_written)
-            return events_read_from_sds
+    # TODO: get data from SDS
+    # def from_sds(self, start):
+    #     """Reads all device events for all locations written to SDS during
+    #     current session"""
+    #     events_read_from_sds = []
+    #     if not self.types and not self.streams:
+    #         return events_read_from_sds
+    #     for loc in self.ws.locations:
+    #         for device in loc.devices:
+    #             type_id = device.name
+    #             if self.init_type(type_id=type_id,
+    #                               prop_names=device.metric_names):
+    #                 self.init_stream(type_id)
+    #
+    #                 value_class = SdsTypeData(type_id=device.name,
+    #                                           prop_names=device.metric_names)
+    #
+    #                 session_events_written = self.client.get_window_values(
+    #                     self.namespace_id,
+    #                     type_id,
+    #                     value_class,
+    #                     start=start,
+    #                     end=datetime.utcnow()
+    #                 )
+    #
+    #                 if session_events_written:
+    #                     events_read_from_sds.append(session_events_written)
+    #         return events_read_from_sds
 
     def write_single_event_to_sds(self, event, stream_id):
         """Writes an 'SdsTypeData' object to SDS"""

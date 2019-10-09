@@ -9,15 +9,13 @@ import time
 
 class SdsClient(object):
     """Handles communication with SDS Service"""
-    def __init__(self, tenant, url, resource, authority, client_id,
+    def __init__(self, tenant, url, client_id,
                  client_secret):
 
         self.tenantId = tenant
         self.url = url
-        self.resource = resource
         self.clientId = client_id
         self.clientSecret = client_secret
-        self.authority = authority
         self.__token = ""
         self.__expiration = 0
         self.__get_token()
